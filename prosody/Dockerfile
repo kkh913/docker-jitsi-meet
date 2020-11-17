@@ -3,6 +3,7 @@ FROM ${JITSI_REPO}/base
 
 ADD https://prosody.im/files/prosody-debian-packages.key /tmp/prosody.key
 
+# Install
 RUN \
     apt-key add /tmp/prosody.key \
     && rm -f /tmp/prosody.key \
@@ -44,10 +45,24 @@ RUN \
     && apt-cleanup \
     && rm -rf /tmp/pkg /var/cache/apt
 
-RUN patch -d /usr/lib/prosody/modules/muc -p0 < /prosody-plugins/muc_owner_allow_kick.patch
-
 COPY rootfs/ /
+
+RUN \
+    patch -d /usr/lib/prosody/modules/muc -p0 < /prosody-plugins/muc_owner_allow_kick.patch && \
+    patch -d /usr/bin -p1 < /prosodyctl-certdir-permission-fix.patch
+
+# Apply config
+RUN echo "TLS_REQCERT allow" >> /etc/ldap/ldap.conf
+
+# Fix permissions
+RUN \
+  /fix-permissions.sh && \
+  touch /etc/saslauthd.conf && \
+  chmod g=u -R /prosody-plugins /etc/saslauthd.conf && \
+  chgrp -R root /etc/sasldb2 /run/saslauthd
 
 EXPOSE 5222 5269 5347 5280
 
 VOLUME ["/config", "/prosody-plugins-custom"]
+
+USER 1001

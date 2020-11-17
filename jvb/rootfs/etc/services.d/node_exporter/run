@@ -1,0 +1,8 @@
+#!/usr/bin/with-contenv bash
+
+if [[ -z "$EXPORTER_TCP_PORT" ]]; then
+  EXPORTER_TCP_PORT=9100
+fi
+
+exec /bin/bash -c '/node_exporter --web.listen-address=":$EXPORTER_TCP_PORT"'
+

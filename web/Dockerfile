@@ -20,6 +20,10 @@ RUN \
 	chmod a+x /usr/local/bin/certbot-auto && \
 	certbot-auto --noninteractive --install-only
 
-EXPOSE 80 443
+RUN /fix-permissions.sh
+
+EXPOSE 8080 8443
 
 VOLUME ["/config", "/etc/letsencrypt", "/usr/share/jitsi-meet/transcripts"]
+
+USER 1001

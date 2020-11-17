@@ -1,6 +1,8 @@
 ARG JITSI_REPO=jitsi
 FROM ${JITSI_REPO}/base
 
+ENV JAVA_SYS_PROPS "-Djava.util.prefs.userRoot=/root"
+
 RUN	\
 	mkdir -p /usr/share/man/man1 && \
 	apt-dpkg-wrap apt-get update && \

@@ -3,11 +3,15 @@ version: '3'
 services:
     # Frontend
     web:
-        image: jitsi/web
+        image: jitsi/web:stable-4548
+        restart: ${RESTART_POLICY}
+        ports:
+            - '${HTTP_PORT}:80'
+            - '${HTTPS_PORT}:443'
         volumes:
-            - ${CONFIG}/web:/config
-            - ${CONFIG}/web/letsencrypt:/etc/letsencrypt
-            - ${CONFIG}/transcripts:/usr/share/jitsi-meet/transcripts
+            - ${CONFIG}/web:/config:Z
+            - ${CONFIG}/web/letsencrypt:/etc/letsencrypt:Z
+            - ${CONFIG}/transcripts:/usr/share/jitsi-meet/transcripts:Z
         environment:
             - ENABLE_AUTH
             - ENABLE_GUESTS
@@ -35,29 +39,21 @@ services:
             - JIBRI_RECORDER_PASSWORD
             - ENABLE_RECORDING
         networks:
-            # traefik: change the following line to your external docker network 
-            web:
             meet.jitsi:
                 aliases:
                     - ${XMPP_DOMAIN}
-        labels:
-            # traefik: change that to your external network
-            - "traefik.docker.network=web"
-            - "traefik.enable=true"
-            - "traefik.backend=jc_backend"
-            # traefik: change that to your actual fqdn 
-            - "traefik.basic.frontend.rule=Host:your.host.name"
-            - "traefik.basic.port=8080"
 
     # XMPP server
     prosody:
-        image: jitsi/prosody
+        image: jitsi/prosody:stable-4548
+        restart: ${RESTART_POLICY}
         expose:
             - '5222'
             - '5347'
             - '5280'
         volumes:
-            - ${CONFIG}/prosody:/config
+            - ${CONFIG}/prosody/config:/config:Z
+            - ${CONFIG}/prosody/prosody-plugins-custom:/prosody-plugins-custom:Z
         environment:
             - AUTH_TYPE
             - ENABLE_AUTH
@@ -114,9 +110,10 @@ services:
 
     # Focus component
     jicofo:
-        image: jitsi/jicofo
+        image: jitsi/jicofo:stable-4548
+        restart: ${RESTART_POLICY}
         volumes:
-            - ${CONFIG}/jicofo:/config
+            - ${CONFIG}/jicofo:/config:Z
         environment:
             - ENABLE_AUTH
             - XMPP_DOMAIN
@@ -129,6 +126,7 @@ services:
             - JICOFO_RESERVATION_REST_BASE_URL
             - JVB_BREWERY_MUC
             - JIGASI_BREWERY_MUC
+            - JIGASI_SIP_URI
             - JIBRI_BREWERY_MUC
             - JIBRI_PENDING_TIMEOUT
             - TZ
@@ -139,12 +137,13 @@ services:
 
     # Video bridge
     jvb:
-        image: jitsi/jvb
+        image: jitsi/jvb:stable-4548
+        restart: ${RESTART_POLICY}
         ports:
             - '${JVB_PORT}:${JVB_PORT}/udp'
-            - '${JVB_TCP_PORT}:${JVB_TCP_PORT}'
+            - '${JVB_TCP_MAPPED_PORT}:${JVB_TCP_PORT}'
         volumes:
-            - ${CONFIG}/jvb:/config
+            - ${CONFIG}/jvb:/config:Z
         environment:
             - DOCKER_HOST_ADDRESS
             - XMPP_AUTH_DOMAIN
@@ -167,6 +166,3 @@ services:
 # Custom network so all services can communicate using a FQDN
 networks:
     meet.jitsi:
-    # traefik: change the following line to your external docker network 
-    web:
-        external: true
